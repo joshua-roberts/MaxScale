@@ -63,6 +63,7 @@ private:
         PINGING,            /**< Pinging backend server */
         SEND_HISTORY,       /**< Sending stored session command history */
         READ_HISTORY,       /**< Reading results of history execution */
+        PREPARE_PS,         /**< Executing a COM_STMT_PREPARE */
         FAILED,             /**< Handshake/authentication failed */
     };
 
