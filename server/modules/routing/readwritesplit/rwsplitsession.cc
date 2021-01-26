@@ -347,6 +347,8 @@ void RWSplitSession::manage_transactions(RWBackend* backend, GWBUF* writebuf, co
                     }
 
                     // Add the statement to the transaction once the first part of the result is received.
+
+                    MXS_INFO("Adding m_current_query to transaction");
                     m_trx.add_stmt(backend, m_current_query.release());
                 }
             }
@@ -369,6 +371,7 @@ void RWSplitSession::manage_transactions(RWBackend* backend, GWBUF* writebuf, co
          * the whole response is complete to prevent it from being retried
          * in case the connection breaks in the middle of a resultset. */
         m_current_query.reset();
+        MXS_INFO("Query complete, resetting m_current_query");
     }
 }
 
@@ -487,6 +490,7 @@ bool RWSplitSession::handle_ignorable_error(RWBackend* backend, const mxs::Error
         }
         else if (m_config.retry_failed_reads)
         {
+            MXS_INFO("Retrying current query after slave sent an ignorable error");
             ok = true;
             retry_query(m_current_query.release());
         }
@@ -764,6 +768,7 @@ bool RWSplitSession::start_trx_replay()
         if (m_trx.have_stmts() || m_current_query.get())
         {
             // Stash any interrupted queries while we replay the transaction
+            MXS_INFO("Storing m_current_query in m_interrupted_query");
             m_interrupted_query.reset(m_current_query.release());
 
             MXS_INFO("Starting transaction replay %ld", m_num_trx_replays);
@@ -898,6 +903,7 @@ bool RWSplitSession::retry_master_query(RWBackend* backend)
     else if (m_current_query.get())
     {
         // A query was in progress, try to route it again
+        MXS_INFO("Retrying master query: %s", mxs::extract_sql(m_current_query.get()).c_str());
         mxb_assert(m_prev_target == backend);
         retry_query(m_current_query.release());
         can_continue = true;
@@ -1123,6 +1129,7 @@ bool RWSplitSession::handle_error_new_connection(RWBackend* backend, GWBUF* errm
                 // Send an error so that the client knows to proceed.
                 mxs::ReplyRoute route;
                 RouterSession::clientReply(gwbuf_clone(errmsg), route, mxs::Reply());
+                MXS_INFO("Slave failed, sending error and resetting m_current_query");
                 m_current_query.reset();
                 route_stored = true;
             }

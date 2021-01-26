@@ -1104,6 +1104,7 @@ bool RWSplitSession::handle_got_target(mxs::Buffer&& buffer, RWBackend* target, 
     {
         if (store)
         {
+            MXS_INFO("Storing: %s", mxs::extract_sql(buffer.get()).c_str());
             m_current_query.copy_from(buffer);
         }
 
